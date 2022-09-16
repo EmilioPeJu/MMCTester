@@ -19,8 +19,6 @@ from mmctester.led import set_led_long, set_led_off, set_led_short
 from mmctester.tui import TuiManager
 
 
-DEFAULT_PIN_PG = 13
-DEFAULT_PIN_HS = 12
 DEFAULT_TARGET = 0xa2
 
 
@@ -33,7 +31,12 @@ class Main(object):
         self.ipmi.target = pyipmi.Target(target)
         self.sdr = list(self.ipmi.device_sdr_entries())
         self.help_lines = [
-            "Keys:  1 => set HS HIGH  2 => set HS LOW  q => quit"]
+            "Keys:  "
+            + ("1 => set HS HIGH    2 => set HS LOW   "
+                if self.pin_hs is not None else "") +
+            + "q => quit"
+        ]
+
         self.device_lines = []
         self.fru_lines = []
         self.sensor_lines = []
@@ -64,9 +67,9 @@ class Main(object):
     def on_key_press(self, key):
         if key == ord('q'):
             self.want_quit = True
-        elif key == ord('1'):
+        elif key == ord('1') and self.pin_hs is not None:
             self.interface.arduino.digital_write(self.pin_hs, HIGH)
-        elif key == ord('2'):
+        elif key == ord('2') and self.pin_hs is not None:
             self.interface.arduino.digital_write(self.pin_hs, LOW)
 
     def log(self, line):
@@ -95,6 +98,14 @@ class Main(object):
                 f"Product SN {product.serial_number}"
             ])
 
+    def enable_payload(self):
+        if self.pin_pg is not None:
+            self.ipmi.interface.arduino.digital_write(self.pin_pg, HIGH)
+
+    def disable_payload(self):
+        if self.pin_pg is not None:
+            self.ipmi.interface.arduino.digital_write(self.pin_pg, LOW)
+
     def process_handle_closed(self):
         self.log("Handle closed")
         set_led_long(self.ipmi)
@@ -103,7 +114,7 @@ class Main(object):
         time.sleep(5)
         set_led_off(self.ipmi)
         self.log("Enabling payload")
-        self.ipmi.interface.arduino.digital_write(self.pin_pg, HIGH)
+        self.enable_payload()
 
     def process_handle_open(self):
         self.log("Handle open")
@@ -112,7 +123,7 @@ class Main(object):
         time.sleep(5)
         set_led_off(self.ipmi)
         self.log("Disabling payload")
-        self.ipmi.interface.arduino.digital_write(self.pin_pg, LOW)
+        self.disable_payload()
 
     def show_sensors(self):
         self.sensor_lines = []
@@ -139,12 +150,19 @@ class Main(object):
                 f"{s.device_id_string.decode()}: unknown")
 
     def show_payload_status(self):
-        pg_val = self.interface.arduino.digital_read(self.pin_pg)
-        self.payload_lines = [f"PG value: {pg_val}"]
+        self.payload_lines = []
+        if self.pin_pg is not None:
+            pg_val = self.interface.arduino.digital_read(self.pin_pg)
+            self.payload_lines.append(f'PG value: {pg_val}')
+
+    def setup_pins(self):
+        if self.pin_pg is not None:
+            self.interface.arduino.pin_mode(self.pin_pg, OUTPUT)
+        if self.pin_hs is not None:
+            self.interface.arduino.pin_mode(self.pin_hs, OUTPUT)
 
     def _run(self):
-        self.interface.arduino.pin_mode(self.pin_pg, OUTPUT)
-        self.interface.arduino.pin_mode(self.pin_hs, OUTPUT)
+        self.setup_pins()
         self.show_general_info()
         while True:
             self.show_sensors()
@@ -187,10 +205,10 @@ def parse_args():
         '--target', type=int, default=DEFAULT_TARGET,
         help="IPMB address of target device")
     parser.add_argument(
-        '--pin-pg', type=int, default=DEFAULT_PIN_PG,
+        '--pin-pg', type=int,
         help="Arduino pin used for indicating that power payload is good")
     parser.add_argument(
-        '--pin-hs', type=int, default=DEFAULT_PIN_HS,
+        '--pin-hs', type=int,
         help="Arduino pin used for indicating that hotswap switch is on")
     return parser.parse_args()
 
