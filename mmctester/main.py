@@ -20,6 +20,7 @@ from mmctester.tui import TuiManager
 
 
 DEFAULT_TARGET = 0xa2
+PAYLOAD_SLEEP = 3
 
 
 class Main(object):
@@ -111,7 +112,7 @@ class Main(object):
         set_led_long(self.ipmi)
         self.log("Negotiating power")
         self.draw()
-        time.sleep(5)
+        time.sleep(PAYLOAD_SLEEP)
         set_led_off(self.ipmi)
         self.log("Enabling payload")
         self.enable_payload()
@@ -120,7 +121,7 @@ class Main(object):
         self.log("Handle open")
         set_led_short(self.ipmi)
         self.draw()
-        time.sleep(5)
+        time.sleep(PAYLOAD_SLEEP)
         set_led_off(self.ipmi)
         self.log("Disabling payload")
         self.disable_payload()
