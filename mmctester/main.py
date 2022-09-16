@@ -24,9 +24,10 @@ PAYLOAD_SLEEP = 3
 
 
 class Main(object):
-    def __init__(self, port, target, pin_pg, pin_hs):
+    def __init__(self, port, target, pin_pg, pin_hs, pin_pwm):
         self.pin_pg = pin_pg
         self.pin_hs = pin_hs
+        self.pin_pwm = pin_pwm
         self.interface = MMCTesterBoard(port=port)
         self.ipmi = pyipmi.create_connection(self.interface)
         self.ipmi.target = pyipmi.Target(target)
@@ -35,9 +36,12 @@ class Main(object):
             "Keys:  "
             + ("1 => set HS HIGH    2 => set HS LOW   "
                 if self.pin_hs is not None else "") +
+            ("+ => Increment PWM   - => Decrement PWM   "
+                if self.pin_pwm is not None else "")
             + "q => quit"
         ]
 
+        self.duty = 0
         self.device_lines = []
         self.fru_lines = []
         self.sensor_lines = []
@@ -72,6 +76,17 @@ class Main(object):
             self.interface.arduino.digital_write(self.pin_hs, HIGH)
         elif key == ord('2') and self.pin_hs is not None:
             self.interface.arduino.digital_write(self.pin_hs, LOW)
+        elif key == ord('+') and self.pin_pwm is not None:
+            self.duty = self.duty + 32
+            if self.duty > 255:
+                self.duty = 255
+
+            self.interface.arduino.analog_write(self.pin_pwm, self.duty)
+        elif key == ord('-') and self.pin_pwm is not None:
+            self.duty = self.duty - 32
+            if self.duty < 0:
+                self.duty = 0
+            self.interface.arduino.analog_write(self.pin_pwm, self.duty)
 
     def log(self, line):
         ts = time.strftime('%H:%M:%S - ')
@@ -155,12 +170,16 @@ class Main(object):
         if self.pin_pg is not None:
             pg_val = self.interface.arduino.digital_read(self.pin_pg)
             self.payload_lines.append(f'PG value: {pg_val}')
+        if self.pin_pwm is not None:
+            self.payload_lines.append(f'PWM value: {self.duty}')
 
     def setup_pins(self):
         if self.pin_pg is not None:
             self.interface.arduino.pin_mode(self.pin_pg, OUTPUT)
         if self.pin_hs is not None:
             self.interface.arduino.pin_mode(self.pin_hs, OUTPUT)
+        if self.pin_pwm is not None:
+            self.interface.arduino.pin_mode(self.pin_pwm, OUTPUT)
 
     def _run(self):
         self.setup_pins()
@@ -211,12 +230,15 @@ def parse_args():
     parser.add_argument(
         '--pin-hs', type=int,
         help="Arduino pin used for indicating that hotswap switch is on")
+    parser.add_argument(
+        '--pin-pwm', type=int,
+        help="Arduino pin used for outputing a test PWM signal")
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
-    main = Main(args.port, args.target, args.pin_pg, args.pin_hs)
+    main = Main(args.port, args.target, args.pin_pg, args.pin_hs, args.pin_pwm)
     main.run()
 
 
