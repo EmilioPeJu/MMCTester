@@ -174,6 +174,9 @@ class Main(object):
             self._run()
         except KeyboardInterrupt:
             self.tui.quit()
+        except Exception as e:
+            self.tui.quit()
+            raise
 
 
 def parse_args():
