@@ -55,7 +55,7 @@ class ArduinoLocalCommand(object):
 
     def analog_write(self, pin, val):
         command = bytearray(
-            (self.local_address, self.COMMAND_AN_WRITE, pin, val))
+            (self.local_address, self.COMMAND_AN_WRITE, pin, val & 0xff))
         ans = self.send_and_receive(bytes(command))
         if ans[1] != self.COMMAND_AN_WRITE or ans[2] != self.OK:
             raise IOError(f'Invalid answer: {ans}')
