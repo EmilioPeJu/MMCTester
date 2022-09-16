@@ -86,7 +86,8 @@ class MMCTesterBoard(object):
         self._serial_send_raw(full_raw_bytes)
 
     def _receive_raw(self, header):
-        return self._serial_receive_raw(lambda data: rx_filter(header, data))
+        return self._serial_receive_raw(
+            lambda data: data[0] == self.address and rx_filter(header, data))
 
     def _local_receive_raw(self):
         return self._serial_receive_raw(lambda data: data[0] == LOCAL_ADDR)
