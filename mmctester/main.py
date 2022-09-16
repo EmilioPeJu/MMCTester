@@ -196,7 +196,6 @@ def parse_args():
 
 
 def main():
-    # logging.basicConfig(level=logging.DEBUG)
     args = parse_args()
     main = Main(args.port, args.target, args.pin_pg, args.pin_hs)
     main.run()
