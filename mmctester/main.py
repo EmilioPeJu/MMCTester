@@ -96,7 +96,7 @@ class Main(object):
             self.log_lines = self.log_lines[excess:]
 
     def show_general_info(self):
-        device_id = self.ipmi.get_device_id()
+        device_id = str(self.ipmi.get_device_id())
         self.device_lines = [
             f"Device ID: {device_id.device_id}",
             f"Device Rev: {device_id.revision}",
