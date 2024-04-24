@@ -1,19 +1,12 @@
 #!/usr/bin/env python
 import argparse
-import logging
-import os
-import select
-import sys
 import time
 
 import pyipmi
 
-from collections import deque
-
 from pyipmi.sensor import SENSOR_TYPE_MODULE_HOT_SWAP
 
-from mmctester.arduino import (HIGH, LOW, INPUT, OUTPUT, INPUT_PULLUP,
-                               PIN_A0)
+from mmctester.arduino import (HIGH, LOW, OUTPUT)
 from mmctester.interface import MMCTesterBoard
 from mmctester.led import set_led_long, set_led_off, set_led_short
 from mmctester.tui import TuiManager
@@ -96,7 +89,7 @@ class Main(object):
             self.log_lines = self.log_lines[excess:]
 
     def show_general_info(self):
-        device_id = str(self.ipmi.get_device_id())
+        device_id = self.ipmi.get_device_id()
         self.device_lines = [
             f"Device ID: {device_id.device_id}",
             f"Device Rev: {device_id.revision}",
@@ -153,17 +146,16 @@ class Main(object):
             if value is None:
                 value = "na"
             self.sensor_lines.append(
-                f"{s.device_id_string.decode()}: value={value}")
+                f"{s.device_id_string}: value={value}")
         elif s.type is pyipmi.sdr.SDR_TYPE_COMPACT_SENSOR_RECORD:
             (raw, states) = self.ipmi.get_sensor_reading(s.number)
             # TODO: interpret hotswap sensor and make sure it makes sense
             # Does the HS sensor provided by carrier differ?
-            self.sensor_lines.append(
-                f"{s.device_id_string.decode()}: raw_value={raw} "
+            self.sensor_lines.append(f"{s.device_id_string}: raw_value={raw} "
                 f"state=0x{states:x}")
         else:
             self.sensor_lines.append(
-                f"{s.device_id_string.decode()}: unknown")
+                f"{s.device_id_string}: unknown")
 
     def show_payload_status(self):
         self.payload_lines = []
@@ -212,7 +204,7 @@ class Main(object):
             self._run()
         except KeyboardInterrupt:
             self.tui.quit()
-        except Exception as e:
+        except Exception:
             self.tui.quit()
             raise
 
