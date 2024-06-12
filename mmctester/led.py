@@ -8,16 +8,16 @@ def set_led(ipmi, led_function, on_duration):
 
 
 def set_led_off(ipmi):
-    set_led(ipmi, 0x0, 0x0)  # off override
+    return set_led(ipmi, 0x0, 0x0)  # off override
 
 
 def set_led_on(ipmi):
-    set_led(ipmi, 0xff, 0x0)  # on override
+    return set_led(ipmi, 0xff, 0x0)  # on override
 
 
 def set_led_short(ipmi):
-    set_led(ipmi, 0x5a, 0xa)  # short blink
+    return set_led(ipmi, 0x5a, 0xa)  # short blink
 
 
 def set_led_long(ipmi):
-    set_led(ipmi, 0xa, 0x5a)  # long blink
+    return set_led(ipmi, 0xa, 0x5a)  # long blink

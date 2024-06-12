@@ -10,6 +10,7 @@ from mmctester.arduino import (HIGH, LOW, OUTPUT)
 from mmctester.interface import MMCTesterBoard
 from mmctester.led import set_led_long, set_led_off, set_led_short
 from mmctester.tui import TuiManager
+from mmctester.util import hex_or_int
 
 
 DEFAULT_TARGET = 0xa2
@@ -214,7 +215,7 @@ def parse_args():
     parser.add_argument(
         '--port', help='Serial port device node', required=True)
     parser.add_argument(
-        '--target', type=int, default=DEFAULT_TARGET,
+        '--target', type=hex_or_int, default=DEFAULT_TARGET,
         help="IPMB address of target device")
     parser.add_argument(
         '--pin-pg', type=int,
